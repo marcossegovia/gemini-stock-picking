@@ -1,5 +1,7 @@
 # Monthly Stock Picks
 
+![Screenshot-01.png](img/Screenshot-01.png)
+
 ## Description
 
 This project offers a system for generating monthly stock picks and visualizing them through a web application. It integrates a Python script for data generation with a React frontend for an interactive display.
