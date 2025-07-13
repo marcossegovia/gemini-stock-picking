@@ -1,0 +1,31 @@
+# Node.js
+node_modules/
+build/
+.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+venv/
+.venv/
+
+# IDEs
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# Logs and temporary files
+*.log
+*.tmp
+
+# OS generated files
+.DS_Store
+thumbs.db
+
+# Gemini CLI generated files (if any specific patterns emerge)
+# For now, the output is in web_app/public/data, which should be committed.
