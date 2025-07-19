@@ -61,7 +61,11 @@ function App() {
         .then(data => {
           const parsedStocks = data.map(stock => {
             const parsePrice = (priceString) => {
-              const numbers = priceString.replace('').split(' - ').map(Number);
+              if (!priceString) return NaN;
+              const numbers = priceString.match(/[\d.]+/g)?.map(Number);
+              if (!numbers || numbers.length === 0) {
+                return NaN;
+              }
               if (numbers.length === 1) {
                 return numbers[0];
               }

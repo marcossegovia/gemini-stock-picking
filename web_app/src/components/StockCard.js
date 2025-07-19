@@ -3,7 +3,11 @@ import React from 'react';
 function StockCard({ stock }) {
   // Helper function to parse price ranges
   const parsePrice = (priceString) => {
-    const numbers = priceString.replace(/\$/g, '').split(' - ').map(Number);
+    if (!priceString) return NaN;
+    const numbers = priceString.match(/[\d.]+/g)?.map(Number);
+    if (!numbers || numbers.length === 0) {
+      return NaN;
+    }
     if (numbers.length === 1) {
       return numbers[0];
     }
