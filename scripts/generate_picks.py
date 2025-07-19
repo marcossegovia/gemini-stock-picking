@@ -2,6 +2,8 @@ import json
 import os
 import subprocess
 import re
+import time
+import threading
 from datetime import datetime
 
 def get_investor_prompt(investor_file_path):
@@ -16,34 +18,71 @@ def get_investor_prompt(investor_file_path):
     else:
         raise ValueError("Could not find '## Action' or '## Output format' sections in investor.md")
 
-def call_gemini_cli(prompt):
+def call_gemini_cli(prompt, result_container):
     # Assuming gemini-cli is in the PATH
     command = ["gemini", "-y", "-m", "gemini-2.5-flash", "-p", prompt]
     try:
         result = subprocess.run(command, capture_output=True, text=True, check=True)
-        return result.stdout
+        result_container['output'] = result.stdout
     except subprocess.CalledProcessError as e:
         print(f"Error calling gemini: {e}")
         print(f"Stdout: {e.stdout}")
         print(f"Stderr: {e.stderr}")
-        raise
+        result_container['error'] = e
+
+def spinner(stop_event, start_time):
+    spinner_chars = ['-', '\\', '|', '/']
+    while not stop_event.is_set():
+        for char in spinner_chars:
+            if stop_event.is_set():
+                break
+            elapsed_time = time.time() - start_time
+            print(f'\rCalling Gemini to generate stock picks... {char} ({elapsed_time:.2f}s)', end='', flush=True)
+            time.sleep(0.1)
+    print('\r', ' ' * 60, '\r', end='', flush=True) # Clear the spinner line
+
 
 def generate_stock_picks():
     investor_file_path = os.path.join(os.path.dirname(__file__), '..', 'investor.md')
+    print(f"Reading investor prompt from {investor_file_path}...")
     prompt = get_investor_prompt(investor_file_path)
+    print("Prompt retrieved successfully.")
 
-    # Call Gemini CLI
-    gemini_output = call_gemini_cli(prompt)
+    # Call Gemini CLI with spinner
+    result_container = {}
+    stop_spinner = threading.Event()
+    start_time = time.time()
+    gemini_thread = threading.Thread(target=call_gemini_cli, args=(prompt, result_container))
+    spinner_thread = threading.Thread(target=spinner, args=(stop_spinner, start_time))
+
+    gemini_thread.start()
+    spinner_thread.start()
+
+    gemini_thread.join()
+    stop_spinner.set()
+    spinner_thread.join()
+
+    if 'error' in result_container:
+        raise result_container['error']
+
+    gemini_output = result_container.get('output')
+    if not gemini_output:
+        raise ValueError("Failed to get output from Gemini CLI.")
+
+    print("Successfully received response from Gemini.")
 
     # Assuming gemini_output is directly the JSON string
     # Extract only the JSON part from the gemini_output
+    print("\nParsing JSON from Gemini output...")
     json_match = re.search(r'\[.*?\]', gemini_output, re.DOTALL)
     if not json_match:
+        print(f"Gemini CLI Output: {gemini_output}")
         raise ValueError("No JSON array found in Gemini CLI output.")
     json_string = json_match.group(0)
 
     try:
         stock_data = json.loads(json_string)
+        print("Successfully parsed JSON data.")
     except json.JSONDecodeError as e:
         print(f"Error decoding JSON from gemini-cli output: {e}")
         print(f"Gemini CLI Output: {gemini_output}")
@@ -57,6 +96,7 @@ def generate_stock_picks():
     output_path = os.path.join(output_dir, filename)
 
     # Update index.json
+    print(f"\nUpdating index.json at {output_dir}...")
     index_path = os.path.join(output_dir, 'index.json')
     historical_files = []
     if os.path.exists(index_path):
@@ -71,11 +111,13 @@ def generate_stock_picks():
     
     with open(index_path, 'w') as f:
         json.dump(historical_files, f, indent=4)
+    print("index.json updated.")
 
+    print(f"\nSaving stock picks to {output_path}...")
     with open(output_path, 'w') as f:
         json.dump(stock_data, f, indent=4)
 
-    print(f"Stock data generated at {output_path}")
+    print(f"\nStock data generated at {output_path}")
 
 if __name__ == "__main__":
     generate_stock_picks()
