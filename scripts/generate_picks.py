@@ -41,6 +41,22 @@ def spinner(stop_event, start_time):
             time.sleep(0.1)
     print('\r', ' ' * 60, '\r', end='', flush=True) # Clear the spinner line
 
+def transform_stock_data(stock_data):
+    transformed_data = []
+    for stock in stock_data:
+        # Prioritize 'name' and 'ticker' if present, otherwise use 'company_name' and 'stock_symbol'
+        company_name = stock.get("name") or stock.get("company_name")
+        stock_symbol = stock.get("ticker") or stock.get("stock_symbol")
+
+        transformed_stock = {
+            "stock_symbol": stock_symbol,
+            "company_name": company_name,
+            "current_value": stock.get("current_stock_value") or stock.get("current_value"),
+            "analyst_estimated_price": stock.get("analyst_consensus_estimated_price") or stock.get("analyst_estimated_price"),
+            "summary": stock.get("summary")
+        }
+        transformed_data.append(transformed_stock)
+    return transformed_data
 
 def generate_stock_picks():
     investor_file_path = os.path.join(os.path.dirname(__file__), '..', 'investor.md')
@@ -83,6 +99,8 @@ def generate_stock_picks():
     try:
         stock_data = json.loads(json_string)
         print("Successfully parsed JSON data.")
+        stock_data = transform_stock_data(stock_data)
+        print("Successfully transformed stock data to desired format.")
     except json.JSONDecodeError as e:
         print(f"Error decoding JSON from gemini-cli output: {e}")
         print(f"Gemini CLI Output: {gemini_output}")

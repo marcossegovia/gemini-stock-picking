@@ -19,7 +19,9 @@ Output ONLY the JSON array, with no additional text or formatting outside the JS
 
 ## Output format
 
-Output a JSON array of 5 stock objects. Each object MUST have the following keys and value types:
+**CRITICAL: The output MUST be a valid JSON array of 5 stock objects. Do NOT include any text or formatting outside of the JSON array. Each object in the array MUST strictly adhere to the following schema. The keys MUST be exactly as specified below, in the same order, and with the specified value types. This is not a suggestion, it is a requirement. Failure to comply with this format will result in an error.**
+
+Each object MUST have the following keys and value types:
 - `stock_symbol`: string (e.g., "MRK")
 - `company_name`: string (e.g., "Merck & Co (MRK)")
 - `current_value`: string (e.g., "Approximately $130")
