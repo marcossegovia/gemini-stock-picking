@@ -11,7 +11,7 @@ def get_investor_prompt(investor_file_path):
     match = re.search(r'## Action\s*\n(.*?)\n## Output format', content, re.DOTALL)
     if match:
         # Clean up the extracted prompt: remove leading/trailing whitespace and newlines
-        prompt = match.group(1).str ip()
+        prompt = match.group(1).strip()
         return prompt
     else:
         raise ValueError("Could not find '## Action' or '## Output format' sections in investor.md")
